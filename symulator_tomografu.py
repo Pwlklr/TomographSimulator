@@ -169,9 +169,40 @@ class TomographSimulator:
             from tkinter import messagebox
             messagebox.showinfo("DICOM", f"Plik DICOM został zapisany jako:\n{os.path.basename(filename)}")
 
+    def load_dicom_image(self, file_path):
+        import pydicom
+        #  Odczytanie pliku DICOM za pomocą pydicom
+        dicom_data = pydicom.dcmread(file_path)
+
+        # Pobranie danych pikseli z DICOM (zawierają one obraz)
+        image_data = dicom_data.pixel_array
+
+        # Przekształcenie danych pikseli na obraz w skali szarości ('L')
+        image = Image.fromarray(image_data).convert("L")
+        self.image_array = np.array(image)
+
+        # Przeskalowanie obrazu, aby pasował do rozmiaru Canvas (zachowanie proporcji)
+        max_canvas_size = 400
+        img_width, img_height = image.size
+        scale = min(max_canvas_size / img_width, max_canvas_size / img_height)
+        new_size = (int(img_width * scale), int(img_height * scale))
+
+        display_image = image.resize(new_size)  # Zmieniony obraz do wyświetlania
+        self.image = ImageTk.PhotoImage(display_image)
+
+        # Usunięcie poprzedniego obrazu z Canvas i wyświetlenie nowego
+        self.original_picture_canvas.delete("all")
+        self.original_picture_canvas.create_image(200, 200, image=self.image, anchor=tk.CENTER)
+
+        # Włączenie przycisku "Start"
+        self.start_button.config(state=tk.NORMAL)
+
     def load_image(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.bmp")])
+        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.bmp;*.dcm")])
         if not file_path:
+            return
+        if file_path.endswith(".dcm"):
+            self.load_dicom_image(file_path)
             return
         from PIL import Image
         image = Image.open(file_path).convert("L")  # Skala szarości
