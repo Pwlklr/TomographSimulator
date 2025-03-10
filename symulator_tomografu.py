@@ -454,8 +454,10 @@ class TomographSimulator:
             alpha = det_index - j0
 
             # Pobieramy odpowiednią projekcję (wiersz sinogramu) dla kąta theta
-            proj = sinogram[i, :]  # kształt: (num_detectors,)
-
+            try:
+                proj = sinogram[i, :]  # kształt: (num_detectors,)
+            except IndexError:
+                pass
             # Aby operować wektorowo, rozszerzamy projekcję do rozmiaru obrazu:
             # Możemy wykorzystać fancy indexing – sinogram[i, j0] daje macierz (rows, cols)
             proj_val = (1 - alpha) * proj[j0] + alpha * proj[j1]
@@ -490,7 +492,6 @@ class TomographSimulator:
             for j in range(cols):
                 sum_errors += (original[i][j] - reconstructed_image[i][j]) ** 2
         return (sum_errors / (rows * cols)) ** (1/2)
-
     def generate(self):
         # Pobranie parametrów
         delta_alpha = self.delta_alpha_var.get()
